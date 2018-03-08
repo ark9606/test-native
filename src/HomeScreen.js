@@ -2,20 +2,35 @@
  * Created by ARK on 05.03.2018.
  */
 import React from 'react';
-import { TouchableHighlight, StyleSheet, Text, ScrollView, View, Image } from 'react-native';
+import { TouchableHighlight, StyleSheet, Text, ScrollView, View, Image, Alert } from 'react-native';
 
-export default class HomeScreen extends React.Component {
+import {connect} from 'react-redux';
+import {loadData, appendData} from './actions/dataActions';
+
+
+class HomeScreen extends React.Component {
   static navigationOptions = {
     title: 'Test Application',
   };
 
   constructor(props){
     super(props);
-    this.state = {
-      readyToShow: false,
-      data: null
-    }
+    this.loadMore = this.loadMore.bind(this);
   }
+  loadMore(){
+    const newPage = this.props.current_page + 1;
+    fetch(`https://api.500px.com/v1/photos?feature=popular&consumer_key=wB4ozJxTijCwNuggJvPGtBGCRqaZVcF6jsrzUadF&page=${newPage}`,{
+      method: 'GET',
+    })
+    .then(res => res.json())
+    .then(data => {
+      this.props.appendData(data);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }
+
   componentDidMount(){
     fetch('https://api.500px.com/v1/photos?feature=popular&consumer_key=wB4ozJxTijCwNuggJvPGtBGCRqaZVcF6jsrzUadF',{
       method: 'GET',
@@ -23,7 +38,8 @@ export default class HomeScreen extends React.Component {
       .then(res => res.json())
       .then(data => {
 
-        this.setState({readyToShow:true, data});
+        // this.setState({readyToShow:true, data});
+        this.props.setData(data);
       })
       .catch(err => {
         console.log(err);
@@ -31,25 +47,34 @@ export default class HomeScreen extends React.Component {
   }
 
   render() {
-    const toRender = this.state.readyToShow ?
-      <View style={styles.list} >
-        {this.state.data.photos.map(p=>
-          <TouchableHighlight key={p.id}
-                              style={styles.listItem}
-                              underlayColor="white"
-                              onPress={()=>this.props.navigation.navigate('ViewPhoto', { photoUrl: p.image_url[0], name: p.name})}>
+    const toRender = this.props.photos ?
+      <View>
+        <View style={styles.list} >
+          {this.props.photos.map(p=>
+            <TouchableHighlight key={p.id}
+                                style={styles.listItem}
+                                underlayColor="white"
+                                onPress={()=>this.props.navigation.navigate('ViewPhoto', { photoUrl: p.image_url[0], name: p.name})}>
 
-            <View >
-              <Image source={{uri: p.image_url[0]}} style={styles.listItemImage}/>
-              <View style={styles.listItemInfo}>
-                <Text numberOfLines={1}>{p.name}</Text>
-                <Text numberOfLines={1} style={styles.listItemInfoUser}>made by {p.user.username}</Text>
+              <View>
+                <Image source={{uri: p.image_url[0]}} style={styles.listItemImage}/>
+                <View style={styles.listItemInfo}>
+                  <Text numberOfLines={1}>{p.name}</Text>
+                  <Text numberOfLines={1} style={styles.listItemInfoUser}>made by {p.user.username}</Text>
+                </View>
               </View>
-            </View>
-          </TouchableHighlight>
-        )}
+            </TouchableHighlight>
+          )}
 
-      </View> : <Text>Loading</Text>;
+        </View>
+        <TouchableHighlight style={styles.loadMoreBtn}
+                            underlayColor="white"
+                            onPress = {this.loadMore}>
+          <Text style={styles.loadMoreBtnText}>Load more</Text>
+        </TouchableHighlight
+        >
+      </View>
+      : <Text>Loading</Text>;
     return (
       <ScrollView>
         {toRender}
@@ -93,5 +118,37 @@ const styles = StyleSheet.create({
   listItemInfoUser:{
     color: 'gray',
     overflow: 'hidden',
+  },
+  loadMoreBtn:{
+    flex: 1,
+    margin: 10,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ddd'
+  },
+  loadMoreBtnText:{
+    color: '#009800',
   }
 });
+
+// state - redux global state
+const mapStateToProps = (state)=>{
+  return {
+    ...state
+  };
+};
+
+// state - redux global state
+const mapDispatchToProps = (dispatch)=>{
+  return {
+    setData: (data)=>{
+      dispatch(loadData(data));
+    },
+    appendData: (data)=>{
+      dispatch(appendData(data));
+    },
+
+  };
+};
+export default connect(mapStateToProps, mapDispatchToProps )(HomeScreen);
