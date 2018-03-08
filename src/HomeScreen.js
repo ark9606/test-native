@@ -2,7 +2,7 @@
  * Created by ARK on 05.03.2018.
  */
 import React from 'react';
-import { TouchableHighlight, StyleSheet, Text, ScrollView, View, Image, Alert } from 'react-native';
+import { TouchableHighlight, StyleSheet, Text, ScrollView, View, Image, Alert, ActivityIndicator } from 'react-native';
 
 import {connect} from 'react-redux';
 import {loadData, appendData} from './actions/dataActions';
@@ -74,7 +74,7 @@ class HomeScreen extends React.Component {
         </TouchableHighlight
         >
       </View>
-      : <Text>Loading</Text>;
+      : <ActivityIndicator style={styles.loading} size="small" color={styles.loadMoreBtnText.color}/>;
     return (
       <ScrollView>
         {toRender}
@@ -91,6 +91,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loading:{
+    flex: 1,
+    marginTop: 20,
   },
   list:{
     paddingTop: 10,
